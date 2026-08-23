@@ -97,9 +97,11 @@ public class SnesApi : ISnesData
         RomUtil.GetCartridgeTitleStartingRomOffset(RomSettingsOffset);
 
     public string CartridgeTitleName =>
-        RomUtil.GetCartridgeTitleFromBuffer(
-            Data.GetRomBytes(CartridgeTitleStartingOffset, RomUtil.LengthOfTitleName)
-        );
+        CartridgeTitleStartingOffset < 0
+            ? "" // headerless image (e.g. WramImage) — no cartridge title
+            : RomUtil.GetCartridgeTitleFromBuffer(
+                Data.GetRomBytes(CartridgeTitleStartingOffset, RomUtil.LengthOfTitleName)
+            );
     
     // recalculates the checksum and then modifies the internal bytes in the ROM so it contains
     // the valid checksum in the ROM header.
@@ -120,6 +122,10 @@ public class SnesApi : ISnesData
         (ushort) ChecksumUtil.ComputeChecksumFromRom(Data.RomBytes.CreateListRawRomBytes());
         
     public bool ComputeIsChecksumValid() =>
+        // headerless images (e.g. WramImage) have no cartridge header, so there's no checksum
+        // to validate — and the checksum bytes at $00FFDC-$00FFDF don't map into them. Short-
+        // circuit like CartridgeTitleName does, otherwise goodchecksum() indexes romdata[-1].
+        RomSettingsOffset >= 0 &&
         ChecksumUtil.IsRomChecksumValid(Data.RomBytes.CreateListRawRomBytes(), Data.RomMapMode, GetRomSize());
 
     public uint RomComplement => (uint) Data.GetRomWord(RomComplementOffset)!;

@@ -33,6 +33,11 @@ public class AddRomDataCommandValidator : AbstractValidator<RomToProjectAssociat
             throw new ArgumentNullException(nameof(project));
 
         var snesData = project.Data.GetSnesApi() ?? throw new ArgumentNullException();
+
+        // Headerless images (WramImage) have no cartridge header to read a checksum from.
+        if (snesData.RomSettingsOffset < 0)
+            return true;
+
         var checksumToVerify =
             ByteUtil.ConvertByteArrayToUInt32(container.RomBytes, snesData.RomComplementOffset);
             
@@ -65,7 +70,11 @@ public class AddRomDataCommandValidator : AbstractValidator<RomToProjectAssociat
         var snesData = project?.Data.GetSnesApi();
         if (project == null || snesData == null)
             return false;
-            
+
+        // Headerless images (WramImage) have no cartridge title to match.
+        if (snesData.RomSettingsOffset < 0)
+            return true;
+
         var gameNameFromRomBytes = RomUtil.GetCartridgeTitleFromRom(container.RomBytes, snesData.RomSettingsOffset);
         var requiredGameNameMatch = project.InternalRomGameName;
 
