@@ -94,7 +94,10 @@ public enum RomMapMode : byte
 
 	[Description("Super MMC")] SuperMmc,
 
-	ExLoRom
+	ExLoRom,
+
+	// flat 1:1 image of WRAM bank $7E; SNES addr = $7E0000 + offset (headerless RAM dump)
+	WramImage,
 }
 	
 public enum ColumnType : int

@@ -12,7 +12,8 @@ namespace Diz.Core.util
         public const int HiromSettingOffset = 0xFFD5;
         public const int ExhiromSettingOffset = 0x40FFD5;
         public const int ExloromSettingOffset = 0x407FD5;
-        
+        public const int WramImageBaseSnesAddress = 0x7E0000;
+
         public static int CalculateSnesOffsetWithWrap(int snesAddress, int offset)
         {
             return (GetBankFromSnesAddress(snesAddress) << 16) + ((snesAddress + offset) & 0xFFFF);
@@ -33,7 +34,7 @@ namespace Diz.Core.util
             GetRomSpeed(GetRomSettingOffset(mode), romBytes);
 
         public static RomSpeed GetRomSpeed(int offset, IReadOnlyList<byte> romBytes) =>
-            offset < romBytes.Count
+            offset >= 0 && offset < romBytes.Count
                 ? (romBytes[offset] & 0x10) != 0 ? RomSpeed.FastRom : RomSpeed.SlowRom
                 : RomSpeed.Unknown;
         
@@ -44,8 +45,17 @@ namespace Diz.Core.util
         /// <param name="allRomBytes">All the bytes in a ROM</param>
         /// <param name="romSettingOffset">Offset of the start of the SNES header section (title info is before this)</param>
         /// <returns>UTF8 string of the title, padded with spaces</returns>
-        public static string GetCartridgeTitleFromRom(IReadOnlyList<byte> allRomBytes, int romSettingOffset) => 
-            GetCartridgeTitleFromBuffer(allRomBytes, GetCartridgeTitleStartingRomOffset(romSettingOffset));
+        public static string GetCartridgeTitleFromRom(IReadOnlyList<byte> allRomBytes, int romSettingOffset)
+        {
+            if (romSettingOffset < 0)
+                return ""; // headerless image (e.g. WramImage) — no cartridge title
+
+            var titleStart = GetCartridgeTitleStartingRomOffset(romSettingOffset);
+            if (titleStart < 0 || titleStart + LengthOfTitleName > allRomBytes.Count)
+                return "";
+
+            return GetCartridgeTitleFromBuffer(allRomBytes, titleStart);
+        }
 
         // input: ROM setting offset (pcOffset, NOT snes address)
         public static int GetCartridgeTitleStartingRomOffset(int romSettingOffset) => 
@@ -70,11 +80,14 @@ namespace Diz.Core.util
         {
             int GetUnmirroredOffset(int offset) => UnmirroredOffset(offset, size);
 
-            // WRAM is N/A to PC addressing
-            if ((address & 0xFE0000) == 0x7E0000) return -1;
+            if (mode != RomMapMode.WramImage)
+            {
+                // WRAM is N/A to PC addressing (except in WramImage mode)
+                if ((address & 0xFE0000) == 0x7E0000) return -1;
 
-            // WRAM mirror & PPU regs are N/A to PC addressing
-            if (((address & 0x400000) == 0) && ((address & 0x8000) == 0)) return -1;
+                // WRAM mirror & PPU regs are N/A to PC addressing
+                if (((address & 0x400000) == 0) && ((address & 0x8000) == 0)) return -1;
+            }
 
             switch (mode)
             {
@@ -141,6 +154,12 @@ namespace Diz.Core.util
 
                     return GetUnmirroredOffset((((address ^ 0x800000) & 0xFF0000) >> 1) | (address & 0x7FFF));
                 }
+                case RomMapMode.WramImage:
+                {
+                    var offset = address - WramImageBaseSnesAddress;
+                    if (offset < 0 || offset >= size) return -1;
+                    return offset;
+                }
                 default:
                 {
                     return -1;
@@ -169,6 +188,8 @@ namespace Diz.Core.util
                 case RomMapMode.ExSa1Rom when offset >= 0x400000:
                     offset += 0x800000;
                     return offset;
+                case RomMapMode.WramImage:
+                    return WramImageBaseSnesAddress + offset;
             }
 
             offset = ((offset & 0x3F8000) << 1) | 0x8000 | (offset & 0x7FFF);
@@ -317,6 +338,7 @@ namespace Diz.Core.util
                 RomMapMode.HiRom => HiromSettingOffset,
                 RomMapMode.ExHiRom => ExhiromSettingOffset,
                 RomMapMode.ExLoRom => ExloromSettingOffset,
+                RomMapMode.WramImage => -1,  // no cartridge header in a flat WRAM image
                 _ => LoromSettingOffset
             };
         }
