@@ -274,11 +274,35 @@ public class Cpu65C816<TByteSource> : Cpu<TByteSource>
         
         var operandOriginalStr1 = "";
         var operandOriginalStr2 = "";
-        
+
+        // when a memory operand carries an "!!o !NAME" text-override, this holds "!NAME" so we
+        // can apply it as the FINAL operand string while keeping the ORIGINAL as raw hex (below).
+        string? memoryOperandOverrideText = null;
+
         if (!identified)
         {
-            // note: lots of complexity with labels, mirroring, overrides, etc inside here:
-            operandOriginalStr1 = FormatOperandAddress(data, offset);
+            // A memory operand with an "!!o !NAME" text-override should auto-emit a define, just
+            // like the immediate path does. RememberInstructionIfOverridden only registers a
+            // define when the ORIGINAL operand is raw hex and the OVERRIDDEN operand is the
+            // "!NAME" text (they must differ). But FormatOperandAddress() itself returns the
+            // override text (its OPTION 0), which would make original == overridden and silently
+            // drop the define. So when a text-override is present, take the ORIGINAL from the raw
+            // operand bytes (NOT the DBR-resolved IA, which would record the wrong value) and
+            // route the override into the FINAL string below.
+            var specialDirective = GetSpecialDirectiveOverrideFromComments(data, offset);
+            var rawOperandHex = specialDirective != null && !string.IsNullOrEmpty(specialDirective.TextToOverride)
+                ? GetRawOperandHexStr(data, offset)
+                : "";
+            if (rawOperandHex.Length > 0)
+            {
+                operandOriginalStr1 = rawOperandHex;
+                memoryOperandOverrideText = specialDirective!.TextToOverride;
+            }
+            else
+            {
+                // note: lots of complexity with labels, mirroring, overrides, etc inside here:
+                operandOriginalStr1 = FormatOperandAddress(data, offset);
+            }
             operandOriginalStr2 = "";
         }
         else
@@ -289,6 +313,10 @@ public class Cpu65C816<TByteSource> : Cpu<TByteSource>
 
         var operandFinalStr1 = operandOriginalStr1;
         var operandFinalStr2 = operandOriginalStr2;
+
+        // apply the memory-operand "!!o !NAME" override as the rendered operand (see note above).
+        if (memoryOperandOverrideText != null)
+            operandFinalStr1 = memoryOperandOverrideText;
         
         // try a substitution, if any exist. only for opcodes with ONE operand (not going to handle the ones with two)
         if (overridesAllowed)
@@ -542,6 +570,30 @@ public class Cpu65C816<TByteSource> : Cpu<TByteSource>
         }
 
         return RomUtil.ConvertNumToHexStr(intermediateAddress, numByteDigitsToDisplay);
+    }
+
+    // Reads the raw operand bytes (little-endian) at the instruction's operand width and
+    // formats them as a hex string like "$0006". Unlike GetFormattedRawHexIa, this does NOT
+    // DBR-resolve to an intermediate address (e.g. $7F0006) — it is the literal operand value,
+    // which is what an auto-emitted "!NAME" define must equal for the assembled bytes to match.
+    // Derived the same way the immediate path derives operandValue1: GetRomByte/Word/Long at
+    // offset+1, width from the addressing mode (1=DP/.B, 2=absolute/.W, 3=long/.L).
+    private string GetRawOperandHexStr(TByteSource data, int offset)
+    {
+        var mode = GetAddressMode(data, offset);
+        if (mode == null)
+            return "";
+
+        var numBytes = GetNumBytesToShow(mode.Value);
+        int? rawValue = numBytes switch
+        {
+            1 => (int?)data.GetRomByte(offset + 1),
+            2 => data.GetRomWord(offset + 1),
+            3 => data.GetRomLong(offset + 1),
+            _ => null
+        };
+
+        return rawValue != null ? CreateHexStr(rawValue, numBytes * 2) : "";
     }
 
     private string GetFinalLabelExpressionToUse(TByteSource data, int offset)
