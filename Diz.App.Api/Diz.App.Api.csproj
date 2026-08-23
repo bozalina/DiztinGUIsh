@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <OutputType>Library</OutputType>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="JetBrains.Annotations" Version="2023.3.0" />
+        <PackageReference Include="LightInject" Version="6.6.4" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.*" />
+        <PackageReference Include="Scalar.AspNetCore" Version="2.*" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Diz.Controllers\Diz.Controllers\Diz.Controllers.csproj" />
+    </ItemGroup>
+</Project>

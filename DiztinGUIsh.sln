@@ -58,6 +58,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Diz.Controllers", "Diz.Cont
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Diz.App.AvaloniaBeta", "Diz.App.AvaloniaBeta\Diz.App.AvaloniaBeta.csproj", "{C948E2E0-777A-4CA3-BFF2-ECAA9EA23857}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Diz.App.Api", "Diz.App.Api\Diz.App.Api.csproj", "{BA94BC56-8D0B-49C2-9685-9873D1106280}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -320,6 +322,18 @@ Global
 		{C948E2E0-777A-4CA3-BFF2-ECAA9EA23857}.Release|x64.Build.0 = Release|Any CPU
 		{C948E2E0-777A-4CA3-BFF2-ECAA9EA23857}.Release|x86.ActiveCfg = Release|Any CPU
 		{C948E2E0-777A-4CA3-BFF2-ECAA9EA23857}.Release|x86.Build.0 = Release|Any CPU
+		{BA94BC56-8D0B-49C2-9685-9873D1106280}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA94BC56-8D0B-49C2-9685-9873D1106280}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA94BC56-8D0B-49C2-9685-9873D1106280}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BA94BC56-8D0B-49C2-9685-9873D1106280}.Debug|x64.Build.0 = Debug|Any CPU
+		{BA94BC56-8D0B-49C2-9685-9873D1106280}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BA94BC56-8D0B-49C2-9685-9873D1106280}.Debug|x86.Build.0 = Debug|Any CPU
+		{BA94BC56-8D0B-49C2-9685-9873D1106280}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA94BC56-8D0B-49C2-9685-9873D1106280}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA94BC56-8D0B-49C2-9685-9873D1106280}.Release|x64.ActiveCfg = Release|Any CPU
+		{BA94BC56-8D0B-49C2-9685-9873D1106280}.Release|x64.Build.0 = Release|Any CPU
+		{BA94BC56-8D0B-49C2-9685-9873D1106280}.Release|x86.ActiveCfg = Release|Any CPU
+		{BA94BC56-8D0B-49C2-9685-9873D1106280}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
