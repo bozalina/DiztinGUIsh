@@ -668,8 +668,12 @@ public class DizApiService(
             region.ContextToApply   = contextToApply;
             region.Priority         = priority;
             region.ExportSeparateFile = exportSeparateFile;
-            region.ExportType = Enum.Parse<RegionExportType>(
-                string.IsNullOrEmpty(exportType) ? "Assembly" : exportType, ignoreCase: true);
+            region.ExportType = Enum.TryParse<RegionExportType>(
+                string.IsNullOrEmpty(exportType) ? "Assembly" : exportType,
+                ignoreCase: true, out var parsedExportType)
+                ? parsedExportType
+                : throw new DizApiException(
+                    DizApiErrorKind.InvalidArgument, $"Unknown exportType: {exportType}");
             region.AssetType    = assetType ?? "";
             region.AssetVersion = assetVersion ?? "";
             region.AssetName    = assetName ?? "";
