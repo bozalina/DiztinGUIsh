@@ -8,8 +8,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
 #endif
+using Diz.App.Api;
 using Diz.App.Common;
 using Diz.Ui.Winforms.util;
+using LightInject;
 
 namespace Diz.App.Winforms;
 
@@ -75,7 +77,18 @@ public static class Program
 
         var serviceFactory =
             DizWinformsRegisterServices.CreateServiceFactoryAndRegisterTypes(labelEditorBackend);
+
+        // Start the embedded HTTP API (used by the MCP server and other external tooling),
+        // exactly as the old fork's host did. The window-backed adapters are lazy, so the
+        // server starting here does not create the main window before StartApp does.
+        var apiServer = serviceFactory.GetInstance<DizApiServer>();
+        apiServer.Start();
+
         DizAppCommon.StartApp(serviceFactory, args);
+
+        // Don't await Kestrel shutdown -- fire-and-forget Stop, matching the old fork's host
+        // (StopAsync can hang on long-lived connections).
+        _ = apiServer.Stop();
     }
 
     // Pull a valueless "--flag" out of args, reporting whether it was present. Same motivation as
