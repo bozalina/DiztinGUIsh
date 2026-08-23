@@ -490,7 +490,9 @@ public class DizApiServer : IAsyncDisposable
         api.MapPost("/regions", async (CreateRegionBody body) =>
                Results.Ok(await _service.CreateRegion(
                    body.StartSnesAddress, body.EndSnesAddress, body.RegionName,
-                   body.ContextToApply, body.Priority, body.ExportSeparateFile)))
+                   body.ContextToApply, body.Priority, body.ExportSeparateFile,
+                   body.ExportType, body.AssetType, body.AssetVersion,
+                   body.AssetName, body.AssetOptions)))
 
            .WithTags("Regions")
            .WithName("CreateRegion")
@@ -524,7 +526,9 @@ public class DizApiServer : IAsyncDisposable
     private record PatchLabelBody(string? Name, string? Comment);
     private record CreateRegionBody(
         string StartSnesAddress, string EndSnesAddress, string RegionName,
-        string ContextToApply, int Priority, bool ExportSeparateFile);
+        string ContextToApply, int Priority, bool ExportSeparateFile,
+        string ExportType = "Assembly", string AssetType = "", string AssetVersion = "",
+        string AssetName = "", string AssetOptions = "");
     private record OpenProjectBody(string Path);
     private record SetContextMappingBody(string NameOverride);
 }

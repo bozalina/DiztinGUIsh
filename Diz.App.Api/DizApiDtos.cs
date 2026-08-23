@@ -222,7 +222,17 @@ public record RegionDto(
     /// <summary>Priority used to resolve overlapping regions. Higher value wins.</summary>
     int Priority,
     /// <summary>If true, this region's output will be written to a separate assembly file on export.</summary>
-    bool ExportSeparateFile
+    bool ExportSeparateFile,
+    /// <summary>Region export type: "Assembly" (inline db), "Binary" (verbatim incbin), or "Asset" (typed codec).</summary>
+    string ExportType,
+    /// <summary>Dotted asset type (e.g. "gfx.snes.2bpp", "audio.brr", "blob.container"); empty for Assembly/Binary.</summary>
+    string AssetType,
+    /// <summary>Asset schema/version tag; empty when not an asset.</summary>
+    string AssetVersion,
+    /// <summary>Output asset name (drives the generated incbin filename); empty to derive from the region name.</summary>
+    string AssetName,
+    /// <summary>Free-form JSON options blob passed to the asset exporter; empty when not an asset.</summary>
+    string AssetOptions
 );
 
 /// <summary>A report of flag-boundary misalignments in the ROM.</summary>

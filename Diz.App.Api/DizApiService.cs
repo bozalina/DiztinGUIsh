@@ -620,7 +620,12 @@ public class DizApiService(
             RegionName: r.RegionName,
             ContextToApply: r.ContextToApply,
             Priority: r.Priority,
-            ExportSeparateFile: r.ExportSeparateFile
+            ExportSeparateFile: r.ExportSeparateFile,
+            ExportType: r.ExportType.ToString(),
+            AssetType: r.AssetType ?? "",
+            AssetVersion: r.AssetVersion ?? "",
+            AssetName: r.AssetName ?? "",
+            AssetOptions: r.AssetOptions ?? ""
         );
 
     public Task<IReadOnlyList<RegionDto>> GetAllRegions() =>
@@ -647,7 +652,9 @@ public class DizApiService(
 
     public Task<RegionDto> CreateRegion(
         string startSnesAddress, string endSnesAddress, string regionName,
-        string contextToApply, int priority, bool exportSeparateFile) =>
+        string contextToApply, int priority, bool exportSeparateFile,
+        string? exportType = null, string? assetType = null, string? assetVersion = null,
+        string? assetName = null, string? assetOptions = null) =>
         _dispatcher.InvokeAsync(() =>
         {
             var startAddr = ParseSnesAddress(startSnesAddress);
@@ -661,6 +668,12 @@ public class DizApiService(
             region.ContextToApply   = contextToApply;
             region.Priority         = priority;
             region.ExportSeparateFile = exportSeparateFile;
+            region.ExportType = Enum.Parse<RegionExportType>(
+                string.IsNullOrEmpty(exportType) ? "Assembly" : exportType, ignoreCase: true);
+            region.AssetType    = assetType ?? "";
+            region.AssetVersion = assetVersion ?? "";
+            region.AssetName    = assetName ?? "";
+            region.AssetOptions = assetOptions ?? "";
             snesApi.Regions.Add(region);
             var index = snesApi.Regions.Count - 1;
             var dto = RegionToDto(index, region);
