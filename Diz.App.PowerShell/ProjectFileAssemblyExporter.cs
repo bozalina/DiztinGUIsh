@@ -58,7 +58,14 @@ public class ProjectFileAssemblyExporter : IProjectFileAssemblyExporter
 
         if (!result.Success)
         {
-            logger.Error($"Failed to build, error was: {result.AssemblyOutputStr}");
+            // FatalErrorMsg is where LogCreator.CreateLog() records the real failure
+            // (LogOutput.cs). AssemblyOutputStr is only populated when Settings.OutputToString
+            // is true, so logging it alone made every headless failure print a blank message.
+            logger.Error($"Failed to build ({result.ErrorCount} error(s)): {result.FatalErrorMsg}");
+            if (!string.IsNullOrWhiteSpace(result.ErrorsStr))
+                logger.Error($"errors: {result.ErrorsStr}");
+            if (!string.IsNullOrWhiteSpace(result.AssemblyOutputStr))
+                logger.Error($"assembly output: {result.AssemblyOutputStr}");
             return false;
         }
 
