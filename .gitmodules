@@ -1,6 +1,6 @@
 [submodule "Diz.LogWriter"]
 	path = Diz.LogWriter
-	url = https://github.com/bozalina/Diz.LogWriter.git
+	url = git@github.com:bozalina/Diz.LogWriter.git
 [submodule "Diz.Ui.Winforms"]
 	path = Diz.Ui.Winforms
 	url = https://github.com/DizTools/Diz.Ui.Winforms
