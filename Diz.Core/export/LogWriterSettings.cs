@@ -186,7 +186,10 @@ public record LogWriterSettings : ILogWriterSettings
         
         var path = FileOrFolderOutPath;
         if (Structure == FormatStructure.OneBankPerFile)
-            path += "\\"; // force it to treat it as a path.
+            // Must be the platform separator, not a literal '\'. On Linux '\' is a legal
+            // filename char, so "../asm/som\" makes GetDirectoryName() below see "som\" as the
+            // FILENAME and return "../asm" -- silently dropping the last path component.
+            path += Path.DirectorySeparatorChar; // force it to treat it as a path.
 
         // if it's absolute path, use that first, ignore base path
         if (Path.IsPathFullyQualified(path))
@@ -196,7 +199,7 @@ public record LogWriterSettings : ILogWriterSettings
         var relativeFolderPath = Path.GetDirectoryName(path) ?? "";
         
         if (Structure == FormatStructure.OneBankPerFile)
-            relativeFolderPath += "\\"; // force it to treat it as a path.
+            relativeFolderPath += Path.DirectorySeparatorChar; // force it to treat it as a path.
 
         return Path.Combine(BaseOutputPath ?? "", relativeFolderPath);
     }
