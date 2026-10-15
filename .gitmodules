@@ -3,4 +3,4 @@
 	url = git@github.com:bozalina/Diz.LogWriter.git
 [submodule "Diz.Ui.Winforms"]
 	path = Diz.Ui.Winforms
-	url = https://github.com/DizTools/Diz.Ui.Winforms
+	url = git@github.com:bozalina/Diz.Ui.Winforms.git
