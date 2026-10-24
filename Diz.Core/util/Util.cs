@@ -186,25 +186,22 @@ public static class Util
         return buffer;
     }
 
+    // Reads exactly count bytes, or throws EndOfStreamException if the stream ends first.
+    // Read() returning 0 is end-of-stream for every stream type, sockets included: a blocking
+    // NetworkStream waits for at least one byte and returns 0 only once the peer has closed
+    // the connection, after which it returns 0 forever -- retrying would spin.
     public static int ReadNext(Stream stream, byte[] buffer, int count)
-    {
-        // not in love with this.
-        return DoReadNext(stream, buffer, count, stream is NetworkStream);
-    }
-
-    private static int DoReadNext(Stream stream, byte[] buffer, int count, bool continueOnZeroBytesRead=false)
     {
         var offset = 0;
 
         while (count > 0)
         {
             var bytesRead = stream.Read(buffer, offset, count);
-                
+            if (bytesRead == 0)
+                break;
+
             count -= bytesRead;
             offset += bytesRead;
-
-            if (bytesRead == 0 && !continueOnZeroBytesRead)
-                break;
         }
 
         if (count > 0)
