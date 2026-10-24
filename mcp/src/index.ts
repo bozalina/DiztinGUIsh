@@ -546,6 +546,50 @@ server.tool(
   }
 );
 
+// ── Live trace capture ────────────────────────────────────────────────────────
+
+const CAPTURE_STATUS_NOTE =
+  "Returns the capture status: state (Idle, Running, Stopping, Finished, Failed), " +
+  "queuedBlocks / queuedBytes (trace blocks received from bsnes but not yet applied; " +
+  "bytes are compressed size), running totals (romBytesAnalyzed, romBytesModified, " +
+  "marksModified, mFlagsModified, xFlagsModified, dbModified, dpModified) and error. ";
+
+server.tool(
+  "StartCapture",
+  "Start a live bsnes trace capture into the open project -- the headless equivalent " +
+  "of Tools > Live Capture > BSNESPlus Trace Logging > Start. Connects once, with no " +
+  "retry, to bsnes-plus's trace socket (localhost:27015), so bsnes must already be " +
+  "listening: call bsnes_set_trace enabled=true first. Waits up to two seconds to report " +
+  "a refused connection (state 'Failed'). End the capture by turning Trace off in bsnes " +
+  "(bsnes_set_trace enabled=false), which delivers the whole trace and closes the " +
+  "stream; the capture then finishes by itself once its queue drains. Poll GetCapture " +
+  "until state is 'Finished', then SaveProject -- the project is marked unsaved. " +
+  CAPTURE_STATUS_NOTE,
+  {},
+  async () => text(await api("POST", "/capture/start"))
+);
+
+server.tool(
+  "StopCapture",
+  "Stop the live capture early -- the capture window's Finish button. Abandons " +
+  "anything bsnes hasn't delivered yet, then finishes the work already queued. Prefer " +
+  "ending a capture with bsnes_set_trace enabled=false, which delivers the whole trace. " +
+  "Returns an error if no capture is in progress. " +
+  CAPTURE_STATUS_NOTE,
+  {},
+  async () => text(await api("POST", "/capture/stop"))
+);
+
+server.tool(
+  "GetCapture",
+  "Read the live capture's status. After bsnes closes the stream the state stays " +
+  "'Running' while the queue drains, which can take minutes after a long movie; " +
+  "'Finished' means every received block is in the project. " +
+  CAPTURE_STATUS_NOTE,
+  {},
+  async () => text(await api("GET", "/capture"))
+);
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 const transport = new StdioServerTransport();

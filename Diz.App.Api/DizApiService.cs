@@ -3,6 +3,7 @@ using Diz.Controllers.interfaces;
 using Diz.Core.Interfaces;
 using Diz.Core.model;
 using Diz.Cpu._65816;
+using Diz.Import.bsnes.tracelog;
 
 namespace Diz.App.Api;
 
@@ -18,6 +19,13 @@ public class DizApiService(
     private readonly IUiThreadDispatcher _dispatcher = dispatcher;
     private readonly IViewRefreshRequester _refreshRequester = refreshRequester;
     private readonly IProjectController _projectController = projectController;
+
+    // Live bsnes trace capture (StartCapture). _captureTask completes only after the
+    // finished capture has been folded into the project's unsaved state.
+    private readonly object _captureLock = new();
+    private BsnesTraceLogCaptureController? _capture;
+    private Task? _captureTask;
+    private string? _captureError;
 
     /// <summary>
     /// Parses a SNES address from a hex string (e.g. "C14CE5" or "0xC14CE5").
@@ -718,4 +726,104 @@ public class DizApiService(
                 FoundAtSnes: foundOffset >= 0 ? FmtSnes(snesApi.ConvertPCtoSnes(foundOffset)) : null
             );
         });
+
+    // -------------------------------------------------------------------------
+    // Live trace capture (Tools > Live Capture > BSNESPlus Trace Logging, headless)
+    // -------------------------------------------------------------------------
+
+    // How long StartCapture waits to see whether the connection to bsnes failed.
+    private static readonly TimeSpan CaptureConnectGrace = TimeSpan.FromSeconds(2);
+
+    public async Task<CaptureStatusDto> StartCapture()
+    {
+        var snesApi = await _dispatcher.InvokeAsync(() => RequireProject().snesApi);
+
+        BsnesTraceLogCaptureController capture;
+        Task captureTask;
+        lock (_captureLock)
+        {
+            if (_captureTask is { IsCompleted: false })
+                throw new DizApiException(DizApiErrorKind.Conflict,
+                    "A capture is already in progress. Wait for it to finish (GetCapture) or stop it.");
+
+            capture = new BsnesTraceLogCaptureController(snesApi);
+            _capture = capture;
+            _captureError = null;
+            _captureTask = captureTask = Task.Run(capture.Run)
+                .ContinueWith(OnCaptureFinished, TaskScheduler.Default)
+                .Unwrap();
+        }
+
+        // Run() connects first; a refused connection fails at once. Report that here
+        // rather than leaving the caller to discover it on the next status read.
+        await Task.WhenAny(captureTask, Task.Delay(CaptureConnectGrace));
+        return GetCaptureStatus();
+    }
+
+    // Same as the capture window's Finish button: abandons whatever hasn't been received
+    // yet. The normal end of a capture is bsnes closing the stream (Trace off), after which
+    // the capture finishes by itself once its queue drains.
+    public CaptureStatusDto StopCapture()
+    {
+        lock (_captureLock)
+        {
+            if (_capture == null || _captureTask is not { IsCompleted: false })
+                throw new DizApiException(DizApiErrorKind.Conflict, "No capture is in progress.");
+            _capture.SignalToStop();
+        }
+        return GetCaptureStatus();
+    }
+
+    public CaptureStatusDto GetCaptureStatus()
+    {
+        BsnesTraceLogCaptureController? capture;
+        Task? captureTask;
+        string? error;
+        lock (_captureLock)
+        {
+            capture = _capture;
+            captureTask = _captureTask;
+            error = _captureError;
+        }
+
+        if (capture == null || captureTask == null)
+            return new CaptureStatusDto("Idle", 0, 0, 0, 0, 0, 0, 0, 0, 0, null);
+
+        var state = !captureTask.IsCompleted ? (capture.Finishing ? "Stopping" : "Running")
+                  : error != null ? "Failed"
+                  : "Finished";
+        var (stats, queuedBytes) = capture.GetStats();
+        return new CaptureStatusDto(
+            State: state,
+            QueuedBlocks: captureTask.IsCompleted ? 0 : capture.BlocksToProcess,
+            QueuedBytes: queuedBytes,
+            RomBytesAnalyzed: stats.NumRomBytesAnalyzed,
+            RomBytesModified: stats.NumRomBytesModified,
+            MarksModified: stats.NumMarksModified,
+            MFlagsModified: stats.NumMFlagsModified,
+            XFlagsModified: stats.NumXFlagsModified,
+            DbModified: stats.NumDbModified,
+            DpModified: stats.NumDpModified,
+            Error: error);
+    }
+
+    // The capture wrote straight into the project's data on its worker threads; once it
+    // is over, flag the project unsaved and repaint, as closing the capture window does.
+    private async Task OnCaptureFinished(Task run)
+    {
+        if (run.Exception != null)
+        {
+            var messages = run.Exception.Flatten().InnerExceptions.Select(e => e.Message);
+            lock (_captureLock)
+                _captureError = string.Join("\n", messages);
+        }
+
+        await _dispatcher.InvokeAsync(() =>
+        {
+            var session = _projectProvider.CurrentProject?.Session;
+            if (session != null)
+                session.UnsavedChanges = true;
+            _refreshRequester.RequestRefresh();
+        });
+    }
 }

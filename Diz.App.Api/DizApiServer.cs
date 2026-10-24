@@ -515,6 +515,45 @@ public class DizApiServer : IAsyncDisposable
                "Removes the region at the given index from the project's region list. " +
                "Use GET /regions to find region indices. " +
                "Returns 404 if the index is out of range, 503 if no project is loaded.");
+
+        // ── Live trace capture ───────────────────────────────────────────────
+
+        api.MapPost("/capture/start", () => _service.StartCapture())
+           .WithTags("Capture")
+           .WithName("StartCapture")
+           .WithSummary("Start a live bsnes trace capture")
+           .WithDescription(
+               "The headless equivalent of Tools > Live Capture > BSNESPlus Trace Logging > Start. " +
+               "Connects to bsnes-plus's trace socket (localhost:27015) and applies each traced " +
+               "instruction to the open project as it arrives, marking opcodes/operands and M/X, DB and DP. " +
+               "bsnes must already be listening (its debugger's Trace box ticked) -- the connection is " +
+               "attempted once, with no retry. Waits up to two seconds to report a failed connection " +
+               "(state 'Failed' with the error), then returns the capture status. " +
+               "The capture ends by itself when bsnes closes the stream (Trace unticked) and its queue " +
+               "drains; the project is then marked unsaved -- save it to keep the changes. " +
+               "Returns 409 if a capture is already in progress, 503 if no project is loaded.");
+
+        api.MapPost("/capture/stop", () => _service.StopCapture())
+           .WithTags("Capture")
+           .WithName("StopCapture")
+           .WithSummary("Stop the live capture early")
+           .WithDescription(
+               "The capture window's Finish button: stops reading from bsnes and abandons anything " +
+               "not yet received, then finishes the work already queued. Prefer ending a capture by " +
+               "unticking Trace in bsnes, which delivers the whole trace before closing the stream. " +
+               "Returns the capture status; poll GET /capture until state is 'Finished'. " +
+               "Returns 409 if no capture is in progress.");
+
+        api.MapGet("/capture", () => _service.GetCaptureStatus())
+           .WithTags("Capture")
+           .WithName("GetCapture")
+           .WithSummary("Get the live capture's status and queue")
+           .WithDescription(
+               "Returns the capture state -- Idle, Running, Stopping, Finished or Failed -- the queue " +
+               "of trace blocks received but not yet applied (queuedBlocks, queuedBytes: compressed " +
+               "size), and running totals of ROM bytes analyzed and modified. After bsnes closes the " +
+               "stream the state stays 'Running' until the queue drains, which can take minutes after " +
+               "a long movie. 'Finished' means every received block is in the project.");
     }
 
     // HTTP-specific request body records

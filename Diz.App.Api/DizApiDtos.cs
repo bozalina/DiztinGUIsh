@@ -242,3 +242,33 @@ public record MisalignmentReportDto(
     /// <summary>Human-readable log describing each misalignment found.</summary>
     string Log
 );
+
+/// <summary>Status of the live bsnes trace capture (StartCapture / GetCapture).</summary>
+public record CaptureStatusDto(
+    /// <summary>
+    /// "Idle" (no capture started since Diz launched), "Running" (connected and receiving, or still
+    /// working through its queue after bsnes closed the stream), "Stopping" (StopCapture was called),
+    /// "Finished" (done; its changes are in the project, unsaved), or "Failed" (see Error).
+    /// </summary>
+    string State,
+    /// <summary>Compressed trace blocks received from bsnes but not yet applied to the project.</summary>
+    int QueuedBlocks,
+    /// <summary>Compressed size, in bytes, of the queued blocks.</summary>
+    long QueuedBytes,
+    /// <summary>ROM bytes the trace has visited so far.</summary>
+    long RomBytesAnalyzed,
+    /// <summary>ROM bytes whose flags, M/X, DB or DP the capture changed.</summary>
+    long RomBytesModified,
+    /// <summary>Bytes whose flag (opcode/operand) the capture changed.</summary>
+    long MarksModified,
+    /// <summary>Bytes whose M flag the capture changed.</summary>
+    long MFlagsModified,
+    /// <summary>Bytes whose X flag the capture changed.</summary>
+    long XFlagsModified,
+    /// <summary>Bytes whose data bank the capture changed.</summary>
+    long DbModified,
+    /// <summary>Bytes whose direct page the capture changed.</summary>
+    long DpModified,
+    /// <summary>Why the capture failed (State = "Failed"); otherwise null.</summary>
+    string? Error
+);

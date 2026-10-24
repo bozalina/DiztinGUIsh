@@ -61,6 +61,9 @@ public class BsnesTraceLogCaptureController
     private void Shutdown()
     {
         streamProcessor.Shutdown();
+
+        // GetStats() only refreshes its cache while running; keep the final totals.
+        cachedStats = importer.CurrentStats;
         Running = false;
     }
 
