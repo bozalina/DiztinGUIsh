@@ -551,7 +551,10 @@ public class DizApiServer : IAsyncDisposable
            .WithDescription(
                "Returns the capture state -- Idle, Running, Stopping, Finished or Failed -- the queue " +
                "of trace blocks received but not yet applied (queuedBlocks, queuedBytes: compressed " +
-               "size), and running totals of ROM bytes analyzed and modified. After bsnes closes the " +
+               "size), and running totals: ROM bytes analyzed and modified, instructionsUncovered " +
+               "(instruction starts newly decoded) and marksModified (bytes whose opcode/operand " +
+               "flag changed -- the capture window's '# Instructions Uncovered'). Totals stay " +
+               "readable after the capture finishes. After bsnes closes the " +
                "stream the state stays 'Running' until the queue drains, which can take minutes after " +
                "a long movie. 'Finished' means every received block is in the project.");
     }

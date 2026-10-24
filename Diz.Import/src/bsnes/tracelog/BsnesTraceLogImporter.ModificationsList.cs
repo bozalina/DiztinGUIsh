@@ -90,6 +90,7 @@ public partial class BsnesTraceLogImporter
             currentStats.NumRomBytesModified++;
 
             currentStats.NumMarksModified += modData.mMarks ? 1 : 0;
+            currentStats.NumInstructionsUncovered += modData.mMarks && modData.FlagType == FlagType.Opcode ? 1 : 0;
             currentStats.NumDbModified += modData.mDb ? 1 : 0;
             currentStats.NumDpModified += modData.mDp ? 1 : 0;
             currentStats.NumXFlagsModified += modData.mX ? 1 : 0;

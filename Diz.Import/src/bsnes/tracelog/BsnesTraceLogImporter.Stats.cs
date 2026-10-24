@@ -12,6 +12,9 @@ public partial class BsnesTraceLogImporter
         public long NumDbModified;
         public long NumDpModified;
         public long NumMarksModified;
+        // Bytes newly marked as an instruction's first byte: instructions this capture
+        // decoded that the project didn't already have.
+        public long NumInstructionsUncovered;
         public int NumCommentsMarked;
     }
 
@@ -40,7 +43,8 @@ public partial class BsnesTraceLogImporter
             currentStats.NumMFlagsModified = 0;
             currentStats.NumDbModified = 0;
             currentStats.NumDpModified = 0;
-            currentStats.NumMarksModified = 0;   
+            currentStats.NumMarksModified = 0;
+            currentStats.NumInstructionsUncovered = 0;
         } finally {
             statsLock.ExitWriteLock();
         }

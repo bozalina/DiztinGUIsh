@@ -551,8 +551,12 @@ server.tool(
 const CAPTURE_STATUS_NOTE =
   "Returns the capture status: state (Idle, Running, Stopping, Finished, Failed), " +
   "queuedBlocks / queuedBytes (trace blocks received from bsnes but not yet applied; " +
-  "bytes are compressed size), running totals (romBytesAnalyzed, romBytesModified, " +
-  "marksModified, mFlagsModified, xFlagsModified, dbModified, dpModified) and error. ";
+  "bytes are compressed size), running totals and error. The totals: " +
+  "instructionsUncovered (instruction starts newly decoded -- the count of new " +
+  "instructions); marksModified (bytes whose opcode/operand flag changed, opcode and " +
+  "operand bytes alike -- the capture window's '# Instructions Uncovered', which counts " +
+  "bytes); romBytesAnalyzed, romBytesModified, mFlagsModified, xFlagsModified, " +
+  "dbModified, dpModified. They stay readable once the state is 'Finished'. ";
 
 server.tool(
   "StartCapture",

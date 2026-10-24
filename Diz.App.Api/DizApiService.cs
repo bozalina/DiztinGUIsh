@@ -787,7 +787,7 @@ public class DizApiService(
         }
 
         if (capture == null || captureTask == null)
-            return new CaptureStatusDto("Idle", 0, 0, 0, 0, 0, 0, 0, 0, 0, null);
+            return new CaptureStatusDto("Idle", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, null);
 
         var state = !captureTask.IsCompleted ? (capture.Finishing ? "Stopping" : "Running")
                   : error != null ? "Failed"
@@ -800,6 +800,7 @@ public class DizApiService(
             RomBytesAnalyzed: stats.NumRomBytesAnalyzed,
             RomBytesModified: stats.NumRomBytesModified,
             MarksModified: stats.NumMarksModified,
+            InstructionsUncovered: stats.NumInstructionsUncovered,
             MFlagsModified: stats.NumMFlagsModified,
             XFlagsModified: stats.NumXFlagsModified,
             DbModified: stats.NumDbModified,

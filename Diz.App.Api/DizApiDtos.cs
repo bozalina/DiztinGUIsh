@@ -259,8 +259,13 @@ public record CaptureStatusDto(
     long RomBytesAnalyzed,
     /// <summary>ROM bytes whose flags, M/X, DB or DP the capture changed.</summary>
     long RomBytesModified,
-    /// <summary>Bytes whose flag (opcode/operand) the capture changed.</summary>
+    /// <summary>
+    /// Bytes whose flag (opcode/operand) the capture changed -- the capture window's
+    /// "# Instructions Uncovered", which despite its caption counts bytes.
+    /// </summary>
     long MarksModified,
+    /// <summary>Instruction starts newly marked as opcodes: instructions the capture uncovered.</summary>
+    long InstructionsUncovered,
     /// <summary>Bytes whose M flag the capture changed.</summary>
     long MFlagsModified,
     /// <summary>Bytes whose X flag the capture changed.</summary>
